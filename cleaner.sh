@@ -5,4 +5,5 @@ rm Base_Handler.pyc
 rm tester.pyc
 rm data/base/*
 rm data/raw/*
-
+mkdir data/raw
+mkdir data/base
