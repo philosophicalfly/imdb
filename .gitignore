@@ -1,0 +1,8 @@
+/__pycache__/
+TSV_Handler.pyc
+Media.pyc
+Base_Handler.pyc
+tester.pyc
+data/base/*
+data/raw/*
+data/tsv/data.tsv
