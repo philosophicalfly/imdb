@@ -53,7 +53,7 @@ def getIdOf(value, base):
     with open(basePath+str(base), 'r') as baseFile:
         for line in baseFile:
             lineValue = ast.literal_eval(line)[0]
-            if value in lineValue:
+            if value.lower() in lineValue.lower():
                 idList.append(ast.literal_eval(line)[1])
     print (idList)
     return idList
