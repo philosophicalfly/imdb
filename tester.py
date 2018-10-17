@@ -2,6 +2,7 @@ import subprocess
 import TSV_Handler
 import Base_Handler
 from os import system
+from pprint import pprint
 
 def __init__():
     return 0
@@ -11,11 +12,11 @@ def printMenu():
     print ("1 - Importar nova base de dados CSV")
     print ("2 - Ordenar database")
     print ("3 - Selecionar")
-    print ("4 - Adicionar extensão de dados CSV")
-    print ("0 - Sair")
+   #print ("4 - Adicionar extensão de dados CSV")
+    print ("N - Sair")
 
 def printFooter():
-    print("\nDigite qualuqer coisa para continuar")
+    print ("\n\nDigite qualuqer coisa pra continuar.")
     input()
 
 def getMenuOption():
@@ -25,6 +26,16 @@ def getMenuOption():
         print ("Não foi possível selecionar essa opção. Saindo do programa.")
         exit()
     return opcao
+
+def show10in10(listOfIds):
+    for i, ids in enumerate(listOfIds):
+        if((i != 0 and i % 10 == 0)):
+            print("\nENTER: Mais Resultados.")
+            isOut = input('S    : Sair.')
+            if(isOut == 'S'):
+                return 0
+        selected = Base_Handler.select(str(ids))
+        print (selected)
 
 def main():
     mediaList = []
@@ -40,11 +51,7 @@ def main():
             base = input('Digite a Base: ')
             value = input('Digite o Valor: ')
             selectedIds = Base_Handler.getIdOf(value,base)
-            for ids in selectedIds:
-                selected = Base_Handler.select(str(ids))
-                print (selected[:-1])
-        elif todo == 4:
-            addCSV()
+            show10in10(selectedIds)
         else:
             if todo == 0:
                 system('clear')
