@@ -1,6 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import os
 import ast
 import logging
+import time
+
+DEPTH = 2  #  Profundidade da arvore trie
 
 #linearIdFind(id):
 # id = string
@@ -117,8 +122,88 @@ def binaryIdFind(filename, matchvalue, key=lambda val: val):
         else:
             raise RuntimeError('Binary Search Failed')
 
+
+#   register
+#   def: an register is an tuple with the format:
+#   [ string: "titulo" , string: "Id" ]
+
+
+def makeIndexTitle(listTitles):
+    """
+    listTitles: list( ["titulo","Id"] )
+    A partir de uma lista de ["titulo","Id"] cria e retorna um indice 
+    usando  uma arvore "try"(?) de profundidade definida globalmente,
+    em que os indices sao as letras contidas no nome do filme, para
+    facilitar a busca.
+    a arvore de indices contem o seguinte formato:
+    indice = 
+    {
+    dict( caracter ):
+        "registros": list()
+        "indice": dict(caracter)
+    }
+    """
+    indice = {}
+    for registro in listTitles:
+        indice = addTitleToIndex(registro, indice)
+    return indice
+
+def addTitleToIndex(register, indice):
+    """
+    Adiciona um register(titulo, id) a arvore quase trie de indices existente
+    """
+    length = len(register[0])
+    #  loop pra percorrer todos os caracters do titulo
+    for index in range(length):
+        level = indice
+        # loop para adicionar os caracters seguintes ao procurado
+        i = 0
+        #while(i < DEPTH):
+        while(i<DEPTH and index+i<length):  # otimizacao, diminuiu de 23.8 minutos para 22.7 minutos
+        #for i in range(DEPTH):
+            #if index+i >= length:
+            #   break
+            letra = register[0][index+i].lower()
+            #  if the level not yet have the index with the actual letter, create the index
+            if letra not in level:
+                level[letra] = {"registros": [], "indice": {},}
+
+            #  Verifies to have no repeat registers in the list
+            if not level[letra]["registros"]:
+                # list of registers empty
+                level[letra]["registros"].append( register )
+
+            elif level[letra]["registros"][-1] != register:
+                # last register different from actual register
+                level[letra]["registros"].append( register )
+            level = level[letra]["indice"]
+            i = i+1
+    return indice
+    
+
+def searchIdFromTitle(index, string):
+    """
+    Procura por uma string na arvore quase 'trie' de indices, 
+    retorna uma lista de registros do formato[titulo, id]
+    """
+    level = index
+    string = string.lower()
+    for letter in string:
+        if letter in level:
+            level = level[letter]
+        else:
+            break
+
+    registros = []
+    for registro in level['registros']:
+        if string in registro[0].lower():
+            registros.append(registro)
+    return registros
+
+
 #Utilidade unica para testes
 def main():
+    """
     ehSubs = lambda val: ast.literal_eval(val)[0]
     for i in range(1,10):
         print(binaryIdFind('data/base/id', 'tt000000'+str(i), ehSubs))
@@ -129,6 +214,27 @@ def main():
     for i in range(168,1000):
         print(binaryIdFind('data/base/id', 'tt0000'+str(i), ehSubs))
     #print(lineFind('id', 'tt0000020', ehSubs))
+"""
+    # Teste da arvore quase trie de indices
+    string_buscada = 'wa'
+    inicio = time.time()
+    #lista = getPryTitleList('', 'pryTitle')
+    lista = []
+    with open('data/base/pryTitle', 'r') as baseFile:
+        for line in baseFile:
+            lista.append([ast.literal_eval(line)[0], ast.literal_eval(line)[1]])
+    indice = makeIndexTitle(lista)
+    #print(json.dumps(indice, sort_keys=True, indent=4))
+    tempo_index = time.time()
+    registro1 = searchIdFromTitle(indice, string_buscada)
+    #print(json.dumps(registro1, indent=2))
+    end = time.time()
+
+    print('Numero de registros: %s' % len(lista))
+    print('Palavra procurada: "%s"' % string_buscada)
+    print('Tempo de indexacao: \t\t\t    %f' % (tempo_index - inicio))
+    print("trie busca: resultados: %s, tempo: %f" % (len(registro1), end - tempo_index))
+    
 
 if __name__ == "__main__":
     main()
