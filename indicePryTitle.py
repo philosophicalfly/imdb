@@ -9,7 +9,12 @@ import pickle
 basePath = 'data/base/'
 indexPath = 'data/indexes/'
 
-DEPTH = 2  #  Profundidade da arvore quase trie de indices
+#  Profundidade da arvore quase trie de indices
+DEPTH = 2  
+
+#  Coloca apenas os identificadores dos registros no arquivo de indice.
+#  Para 100 itens, diminui de 164k para 56k
+ECONOMIC = False 
 
 #  def: an register is an tuple with the format:
 #  [ string: "titulo" , string: "Id" ]
@@ -48,7 +53,11 @@ def makeIndexTitle(listTitles):
 	"""
 	indice = {}
 	for registro in listTitles:
-		indice = addTitleToIndex(registro, indice)
+		if ECONOMIC:
+			indice = addTitleToIndexEconomic(registro, indice)
+		else:
+			indice = addTitleToIndex(registro, indice)
+		
 	return indice
 
 
@@ -91,7 +100,49 @@ def addTitleToIndex(register, indice):
 			level = level[letra]["indice"]
 			i = i+1
 	return indice
-	
+
+
+def addTitleToIndexEconomic(register, indice):
+	"""
+	Adiciona um o identificar de um registro a arvore quase trie de indices existente
+	"""
+	length = len(register[0])
+	#  loop pra percorrer todos os caracters do titulo
+	for index in range(length):
+		level = indice
+		# loop para adicionar os caracters seguintes ao procurado
+		i = 0
+		#while(i < DEPTH):
+		while(i<DEPTH and index+i<length):	# otimizacao, diminuiu de 23.8 minutos para 22.7 minutos
+		#for i in range(DEPTH):
+			#if index+i >= length:
+			#	break
+			letra = register[0][index+i].lower()
+			"""
+			try:
+				letra.encode('utf8')
+			except Exception as e:
+				print e
+				print register
+			"""
+
+			#  if the level not yet have the index with the actual letter, create the index
+			if letra not in level:
+				level[letra] = {"registros": [], "indice": {},}
+
+			#  Verifies to have no repeat registers in the list
+			if not level[letra]["registros"] or \
+			level[letra]["registros"][-1] != register[1]:
+				# list of registers empty
+				level[letra]["registros"].append( register[1] )
+
+			#elif level[letra]["registros"][-1] != register[1]:
+			#	# last register different from actual register
+			#	level[letra]["registros"].append( register[1] )
+			level = level[letra]["indice"]
+			i = i+1
+	return indice
+
 
 def searchIdFromTitle(index, string):
 	"""
@@ -173,7 +224,6 @@ def main():
 	print("trie   busca: resultados: %s, tempo: %f" % (len(registro1), end1 - tempo_index))
 	print("linear busca: resultados: %s, tempo: %f" % (len(registro2), end2 - end1))
 
-	#print(indice)	
 	ind_json = json.dumps(indice)
 
 	###  Salvando indice no disco para acesso posterior  ###
@@ -187,7 +237,7 @@ def main():
 	tempo1 = time.time()
 	with open(indexPath + 'indice', 'rb') as arq:
 		res = arq.readlines()[0]
-		print('size: %s' % len(res))
+		print('size string: %s' % len(res))
 		try:
 			res = json.loads(res)
 		except Exception as e:
@@ -196,9 +246,7 @@ def main():
 			print e.args	
 	tempo2 = time.time()
 	print('Tempo de carregar do\narquivo para a memoria: \t\t\t%f' % (tempo2 - tempo1))
-
-	quantidade_registros(indice)
-
+	
 
 if __name__ == "__main__":
 	main()
