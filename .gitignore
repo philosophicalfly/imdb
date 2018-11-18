@@ -5,4 +5,5 @@ Base_Handler.pyc
 tester.pyc
 data/base/*
 data/raw/*
+data/temp/*
 data/tsv/data.tsv

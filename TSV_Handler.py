@@ -151,7 +151,7 @@ def createFiles(fileName, qtdLines, qtdFiles):
     content = []
     with open(str(rawPath+fileName),'rb') as unsorted:
         for i in range(0,qtdFiles):
-            with open(str(tempPath+'temp'+str(qtdFiles)+str(i)),'wb') as base8:
+            with open(str(tempPath+'/temp-'+str(qtdFiles)+'-'+str(i)),'wb') as base8:
                 for qtd in range(0,qtdLines):
                     content.append(unsorted.readline())
                 content.sort(key=lambda x:x[2:])
@@ -169,12 +169,11 @@ def unifyFiles(numFiles):
     if numFiles == 1:
         return
     while i < numFiles:
-        file0 = open(str(tempPath+'temp'+str(numFiles)+str(i)),'rb')
-        file1 = open(str(tempPath+'temp'+str(numFiles)+str(i+1)),'rb')
+        file0 = open(str(tempPath+'/temp-'+str(numFiles)+'-'+str(i)),'rb')
+        file1 = open(str(tempPath+'/temp-'+str(numFiles)+'-'+str(i+1)),'rb')
         line0 = file0.readline()
         line1 = file1.readline()
-        #print (i)
-        with open(str(tempPath+'temp'+str(numFiles//2)+str((i+1)//2)),'wb') as base8:
+        with open(str(tempPath+'/temp-'+str(numFiles//2)+'-'+str((i+1)//2)),'wb') as base8:
             while line0 and line1:
                 if (line0[2:] <= line1[2:]):
                     base8.write(line0)
