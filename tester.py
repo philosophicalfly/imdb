@@ -47,6 +47,7 @@ def main():
             TSV_Handler.importTSV(mediaList)
         elif todo == 2:
             TSV_Handler.sortDataInMemory()
+            #TSV_Handler.sortFiles()
         elif todo == 3:
             base = input('Digite a Base: ')
             value = input('Digite o Valor: ')
