@@ -36,13 +36,12 @@ tempPath = 'data/temp/'
 def importTSV(mediaList):
     isHeader = True
     system("clear")
-
-    print ("CSV files to chose: ")
+    print ("\nLista de arquivos TSV para importação:\n")
     result = subprocess.run(['ls', str(tsvPath)], stdout=subprocess.PIPE).stdout.decode('utf-8')
     listOfFiles = result[:-1].split('\n')
     for file in listOfFiles:
         print (file)
-    tsvFile = input('Digite o TSV a ser importado: ')
+    tsvFile = input('\nDigite o TSV a ser importado: ')
 
     rawId = open(str(rawPath+'id'),'wb')
     rawType = open(str(rawPath+'type'),'wb')

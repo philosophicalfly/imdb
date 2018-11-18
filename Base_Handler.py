@@ -70,7 +70,7 @@ def getIdOf(value, base):
             lineValue = ast.literal_eval(line)[0]
             if value.lower() in lineValue.lower():
                 idList.append(ast.literal_eval(line)[1])
-    print (idList)
+    #print (idList)
     return idList
 
 #Utilidade única para testes
