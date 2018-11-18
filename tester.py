@@ -35,6 +35,8 @@ def show10in10(listOfIds):
         if((i != 0 and i % 10 == 0)):
             print("\nENTER: Mais Resultados.")
             isOut = input('    S: Sair.')
+            system('clear')
+            print ('Resultados:\n')
             if(isOut == 'S'):
                 return 0
         selected = Base_Handler.select(str(ids))
