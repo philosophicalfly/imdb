@@ -3,6 +3,7 @@ import subprocess
 import Media
 import sys
 import json
+import time
 
 from os import system
 
@@ -10,6 +11,7 @@ rawPath = 'data/raw/'
 basePath = 'data/base/'
 tsvPath = 'data/tsv/'
 tsvFile = 'data40.tsv'
+tempPath = 'data/temp'
 
 
 
@@ -89,12 +91,12 @@ def importTSV(mediaList):
     rawRuntime.close()
     rawGenres.close()
 
-#sortData()
+#sortDataInMemory()
 # ordena os dados de cada arquivo em data/raw 
 # e coloca-os ordenados em data/base, com os mesmos nomes
 #TODO: ordenar os dados utilizando o HD, pois
 #      o ordenamento ainda está sendo feito em memória. 
-def sortData():
+def sortDataInMemory():
     rawId = open(str(rawPath+'id'),'rb')
     rawType = open(str(rawPath+'type'),'rb')
     rawPryTitle = open(str(rawPath+'pryTitle'),'rb')
@@ -125,14 +127,84 @@ def sortData():
             base.write(line)
         base.close()
 
+#sortFile()
+# ordena os dados de um único arquivo em data/temp utilizando
+# um merge sort no disco rígido
+def sortFile(fileName):
+    #PEGA TAMANHO DO ARQUIVO INTEIRO
+    #TODO: Substituir para um indice de tamanhos
+    unsorted = open(str(rawPath+fileName),'rb')
+    for size, instance in enumerate(unsorted):
+        pass
+    unsorted.close()
+
+    #Chama o criador do 8 primeiros chunks
+    createFiles(fileName, size//7, 8)
+
+#createFiles(qtdLines, qtdFiles):
+# cria o primeiro pack de chunks do arquivo principal
+# aqui estou separando tudo em 8 chunks
+# ao criar um chunk, ordena ele em meória
+# ao final da função, tem-se 8 chunks ordenados separadamente
+# e chama-se a função unifyFiles 
+def createFiles(fileName, qtdLines, qtdFiles):
+    content = []
+    with open(str(rawPath+fileName),'rb') as unsorted:
+        for i in range(0,qtdFiles):
+            with open(str(tempPath+'temp'+str(qtdFiles)+str(i)),'wb') as base8:
+                for qtd in range(0,qtdLines):
+                    content.append(unsorted.readline())
+                content.sort(key=lambda x:x[2:])
+                for line in content:
+                    base8.write(line)
+            content = []
+    unifyFiles(8)
+#unifyFiles(numFiles):
+# pega os 8 chunks anteriormente feitos e
+# recursivamente juntando os arquivos pequenos, linha a linha, 
+# em arquivos maiores, até que só haja um arquivo novamente
+def unifyFiles(numFiles):
+    toWrite = []
+    i = 0
+    if numFiles == 1:
+        return
+    while i < numFiles:
+        file0 = open(str(tempPath+'temp'+str(numFiles)+str(i)),'rb')
+        file1 = open(str(tempPath+'temp'+str(numFiles)+str(i+1)),'rb')
+        line0 = file0.readline()
+        line1 = file1.readline()
+        #print (i)
+        with open(str(tempPath+'temp'+str(numFiles//2)+str((i+1)//2)),'wb') as base8:
+            while line0 and line1:
+                if (line0[2:] <= line1[2:]):
+                    base8.write(line0)
+                    #print ('Escreveu 0' + str(line0))
+                    #time.sleep(0.2)
+                    line0 = file0.readline()
+                    if not line0:
+                        line0 = file1.readline()
+                elif (line0[2:] >= line1[2:]):
+                    base8.write(line1)
+                    #print ('Escreveu 1' + str(line1))
+                    #time.sleep(0.2)
+                    line1 = file1.readline()
+                    if not line1:
+                        line1 = file0.readline()
+            base8.write(line0)
+            base8.write(line1)
+        i += 2
+        
+    unifyFiles(numFiles//2)
+        
 #TODO: extender os arquivos importados e reordenar
 def extendTSV(mediaList):
     return 0
 
 def main():
-    print("Call gui.py")
-    importTSV()
+    print("Testing")
+    sortFile('pryTitle')
     exit()
 
 if __name__ == "__main__":
     main()
+

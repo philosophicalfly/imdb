@@ -7,3 +7,4 @@ rm data/base/*
 rm data/raw/*
 mkdir data/raw
 mkdir data/base
+mkdir data/temp
