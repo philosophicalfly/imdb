@@ -24,7 +24,7 @@ def getMenuOption():
     try:
         opcao = int(input("Selecione a opção desejada: "))
     except ValueError:
-        print ("Não foi possível selecionar essa opção. Saindo do programa.")
+        print ("\nNão foi possível selecionar essa opção. Saindo do programa.")
         exit()
     return opcao
 
@@ -59,7 +59,10 @@ def main():
             TSV_Handler.sortFiles()
             print("\nOrdenação finalizada.")
         elif todo == 3:
-            base = input('Digite a Base: ')
+            print('Bases disponíveis:')
+            for i in listOfFiles:
+                print(i)
+            base = input('\nDigite a base na qual deseja pesquisar: ')
             if str(base) in listOfFiles:
                 value = input('Digite o Valor: ')
                 selectedIds = Base_Handler.getIdOf(value,base)
