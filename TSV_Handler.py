@@ -62,27 +62,16 @@ def importTSV(mediaList):
                 isHeader = False
             else:
                 if len(row) < 9:
-                    #lineId = bytes(str(str([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],'Null'])+'\n').encode('utf8'))
-                    #lineGenres = bytes((str(['Null',row[0]])+'\n').encode('utf8'))
                     media = Media(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],'Null')
                 else:
-                    #lineId = bytes(str(str([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8]])+'\n').encode('utf8'))
-                    #lineGenres = bytes((str([row[8],row[0]])+'\n').encode('utf8'))
                     media = Media(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8])
                 lineId = bytes(media.toCsvRow().encode('utf-8'))
-                #lineType = bytes((str([row[1],row[0]])+'\n').encode('utf8'))
                 lineType = bytes((str([media.type,media.tconst])+'\n').encode('utf8'))
-                #linePryTitle = bytes((str([row[2],row[0]])+'\n').encode('utf8'))
                 linePryTitle = bytes((str([media.priTitle,media.tconst])+'\n').encode('utf8'))
-                #lineOriTitle = bytes((str([row[3],row[0]])+'\n').encode('utf8'))
                 lineOriTitle = bytes((str([media.oriTitle,media.tconst])+'\n').encode('utf8'))
-                #lineIsAdult = bytes((str([row[4],row[0]])+'\n').encode('utf8'))
                 lineIsAdult = bytes((str([media.isAdult,media.tconst])+'\n').encode('utf8'))
-                #lineStartYear = bytes((str([row[5],row[0]])+'\n').encode('utf8'))
                 lineStartYear = bytes((str([media.startYear,media.tconst])+'\n').encode('utf8'))
-                #lineEndYear = bytes((str([row[6],row[0]])+'\n').encode('utf8'))
                 lineEndYear = bytes((str([media.endYear,media.tconst])+'\n').encode('utf8'))
-                #lineRuntime = bytes((str([row[7],row[0]])+'\n').encode('utf8'))
                 lineRuntime = bytes((str([media.runtime,media.tconst])+'\n').encode('utf8'))
                 lineGenres = bytes((str([media.genres, media.tconst]) +'\n').encode('utf-8'))
 
@@ -93,15 +82,7 @@ def importTSV(mediaList):
 
     for rawFile in rawList:
         rawFile.close()
-    #rawId.close()
-    #rawType.close()
-    #rawPryTitle.close()
-    #rawOriTitle.close()
-    #rawIsAdult.close()
-    #rawStartYear.close()
-    #rawEndYear.close()
-    #rawRuntime.close()
-    #rawGenres.close()
+
 
 #sortDataInMemory()
 # ordena os dados de cada arquivo em data/raw 
