@@ -61,10 +61,7 @@ def importTSV(mediaList):
             if isHeader:
                 isHeader = False
             else:
-                if len(row) < 9:
-                    media = Media(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],'Null')
-                else:
-                    media = Media(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8])
+                media = _create_media_from_row(row)
                 lineId = bytes(media.toCsvRow().encode('utf-8'))
                 lineType = bytes((str([media.type,media.tconst])+'\n').encode('utf8'))
                 linePryTitle = bytes((str([media.priTitle,media.tconst])+'\n').encode('utf8'))
@@ -199,6 +196,13 @@ def unifyFiles(fileName, numFiles):
 #TODO: extender os arquivos importados e reordenar
 def extendTSV(mediaList):
     return 0
+
+def _create_media_from_row(row):
+    if len(row) < 9:
+        media = Media(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], 'Null')
+    else:
+        media = Media(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
+    return media
 
 def main():
     print("Testing")
