@@ -1,17 +1,17 @@
 import csv
 import subprocess
-import Media
+from Media import Media
 import sys
 import json
 import time
 
 from os import system
 
-rawPath = 'data/raw/'
-basePath = 'data/base/'
-tsvPath = 'data/tsv/'
-tsvFile = 'data40.tsv'
-tempPath = 'data/temp/'
+RAW_PATH = 'data/raw/'
+BASE_PATH = 'data/base/'
+TSV_PATH = 'data/tsv/'
+TSV_FILE = 'data40.tsv'
+TEMP_PATH = 'data/temp/'
 
 
 
@@ -37,58 +37,49 @@ def importTSV(mediaList):
     isHeader = True
     system("clear")
     print ("\nLista de arquivos TSV para importação:\n")
-    result = subprocess.run(['ls', str(tsvPath)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+    result = subprocess.run(['ls', str(TSV_PATH)], stdout=subprocess.PIPE).stdout.decode('utf-8')
     listOfFiles = result[:-1].split('\n')
     for file in listOfFiles:
         print (file)
-    tsvFile = input('\nDigite o TSV a ser importado: ')
+    tsvFilename = input('\nDigite o TSV a ser importado: ')
 
-    rawId = open(str(rawPath+'id'),'wb')
-    rawType = open(str(rawPath+'type'),'wb')
-    rawPryTitle = open(str(rawPath+'pryTitle'),'wb')
-    rawOriTitle = open(str(rawPath+'oriTitle'),'wb')
-    rawIsAdult = open(str(rawPath+'isAdult'),'wb')
-    rawStartYear = open(str(rawPath+'startYear'),'wb')
-    rawEndYear = open(str(rawPath+'endYear'),'wb')
-    rawRuntime = open(str(rawPath+'runtime'),'wb')
-    rawGenres = open(str(rawPath+'genres'),'wb')
+    rawId = open(str(RAW_PATH + 'id'), 'wb')
+    rawType = open(str(RAW_PATH + 'type'), 'wb')
+    rawPryTitle = open(str(RAW_PATH + 'pryTitle'), 'wb')
+    rawOriTitle = open(str(RAW_PATH + 'oriTitle'), 'wb')
+    rawIsAdult = open(str(RAW_PATH + 'isAdult'), 'wb')
+    rawStartYear = open(str(RAW_PATH + 'startYear'), 'wb')
+    rawEndYear = open(str(RAW_PATH + 'endYear'), 'wb')
+    rawRuntime = open(str(RAW_PATH + 'runtime'), 'wb')
+    rawGenres = open(str(RAW_PATH + 'genres'), 'wb')
 
     rawList = [rawId, rawType, rawPryTitle, rawOriTitle, rawIsAdult, rawStartYear, rawEndYear, rawRuntime, rawGenres]
     
-    with open(tsvPath+tsvFile) as tsvfile:
-        reader = csv.reader(tsvfile, delimiter='\t')
+    with open(TSV_PATH+tsvFilename) as tsvFile:
+        reader = csv.reader(tsvFile, delimiter='\t')
         for row in reader:
             if isHeader:
                 isHeader = False
             else:
-                if len(row) < 9:
-                    lineId = bytes(str(str([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],'Null'])+'\n').encode('utf8'))
-                    lineGenres = bytes((str(['Null',row[0]])+'\n').encode('utf8'))
-                else:
-                    lineId = bytes(str(str([row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8]])+'\n').encode('utf8'))
-                    lineGenres = bytes((str([row[8],row[0]])+'\n').encode('utf8'))
-                lineType = bytes((str([row[1],row[0]])+'\n').encode('utf8'))
-                linePryTitle = bytes((str([row[2],row[0]])+'\n').encode('utf8'))
-                lineOriTitle = bytes((str([row[3],row[0]])+'\n').encode('utf8'))
-                lineIsAdult = bytes((str([row[4],row[0]])+'\n').encode('utf8'))
-                lineStartYear = bytes((str([row[5],row[0]])+'\n').encode('utf8'))
-                lineEndYear = bytes((str([row[6],row[0]])+'\n').encode('utf8'))
-                lineRuntime = bytes((str([row[7],row[0]])+'\n').encode('utf8'))
-                
+                media = _create_media_from_row(row)
+                lineId = bytes(media.toCsvRow().encode('utf-8'))
+                lineType = bytes((str([media.type,media.tconst])+'\n').encode('utf8'))
+                linePryTitle = bytes((str([media.priTitle,media.tconst])+'\n').encode('utf8'))
+                lineOriTitle = bytes((str([media.oriTitle,media.tconst])+'\n').encode('utf8'))
+                lineIsAdult = bytes((str([media.isAdult,media.tconst])+'\n').encode('utf8'))
+                lineStartYear = bytes((str([media.startYear,media.tconst])+'\n').encode('utf8'))
+                lineEndYear = bytes((str([media.endYear,media.tconst])+'\n').encode('utf8'))
+                lineRuntime = bytes((str([media.runtime,media.tconst])+'\n').encode('utf8'))
+                lineGenres = bytes((str([media.genres, media.tconst]) +'\n').encode('utf-8'))
+
                 lineList = [lineId,lineType,linePryTitle,lineOriTitle,lineIsAdult,lineStartYear,lineEndYear,lineRuntime,lineGenres]
 
                 for rawInstance, lineInstance in zip(rawList, lineList):
                     rawInstance.write(lineInstance)
 
-    rawId.close()
-    rawType.close()
-    rawPryTitle.close()
-    rawOriTitle.close()
-    rawIsAdult.close()
-    rawStartYear.close()
-    rawEndYear.close()
-    rawRuntime.close()
-    rawGenres.close()
+    for rawFile in rawList:
+        rawFile.close()
+
 
 #sortDataInMemory()
 # ordena os dados de cada arquivo em data/raw 
@@ -96,25 +87,25 @@ def importTSV(mediaList):
 #TODO: ordenar os dados utilizando o HD, pois
 #      o ordenamento ainda está sendo feito em memória. 
 def sortDataInMemory():
-    rawId = open(str(rawPath+'id'),'rb')
-    rawType = open(str(rawPath+'type'),'rb')
-    rawPryTitle = open(str(rawPath+'pryTitle'),'rb')
-    rawOriTitle = open(str(rawPath+'oriTitle'),'rb')
-    rawIsAdult = open(str(rawPath+'isAdult'),'rb')
-    rawStartYear = open(str(rawPath+'startYear'),'rb')
-    rawEndYear = open(str(rawPath+'endYear'),'rb')
-    rawRuntime = open(str(rawPath+'runtime'),'rb')
-    rawGenres = open(str(rawPath+'genres'),'rb')
+    rawId = open(str(RAW_PATH + 'id'), 'rb')
+    rawType = open(str(RAW_PATH + 'type'), 'rb')
+    rawPryTitle = open(str(RAW_PATH + 'pryTitle'), 'rb')
+    rawOriTitle = open(str(RAW_PATH + 'oriTitle'), 'rb')
+    rawIsAdult = open(str(RAW_PATH + 'isAdult'), 'rb')
+    rawStartYear = open(str(RAW_PATH + 'startYear'), 'rb')
+    rawEndYear = open(str(RAW_PATH + 'endYear'), 'rb')
+    rawRuntime = open(str(RAW_PATH + 'runtime'), 'rb')
+    rawGenres = open(str(RAW_PATH + 'genres'), 'rb')
     rawList = [rawId, rawType, rawPryTitle, rawOriTitle, rawIsAdult, rawStartYear, rawEndYear, rawRuntime, rawGenres]
-    baseId = open(str(basePath+'id'),'wb')
-    baseType = open(str(basePath+'type'),'wb')
-    basePryTitle = open(str(basePath+'pryTitle'),'wb')
-    baseOriTitle = open(str(basePath+'oriTitle'),'wb')
-    baseIsAdult = open(str(basePath+'isAdult'),'wb')
-    baseStartYear = open(str(basePath+'startYear'),'wb')
-    baseEndYear = open(str(basePath+'endYear'),'wb')
-    baseRuntime = open(str(basePath+'runtime'),'wb')
-    baseGenres = open(str(basePath+'genres'),'wb')
+    baseId = open(str(BASE_PATH + 'id'), 'wb')
+    baseType = open(str(BASE_PATH + 'type'), 'wb')
+    basePryTitle = open(str(BASE_PATH + 'pryTitle'), 'wb')
+    baseOriTitle = open(str(BASE_PATH + 'oriTitle'), 'wb')
+    baseIsAdult = open(str(BASE_PATH + 'isAdult'), 'wb')
+    baseStartYear = open(str(BASE_PATH + 'startYear'), 'wb')
+    baseEndYear = open(str(BASE_PATH + 'endYear'), 'wb')
+    baseRuntime = open(str(BASE_PATH + 'runtime'), 'wb')
+    baseGenres = open(str(BASE_PATH + 'genres'), 'wb')
     baseList = [baseId,baseType,basePryTitle,baseOriTitle,baseIsAdult,baseStartYear,baseEndYear,baseRuntime,baseGenres]
     
     for raw,base in zip(rawList,baseList):
@@ -138,7 +129,7 @@ def sortFiles():
 def sortFile(fileName):
     #PEGA TAMANHO DO ARQUIVO INTEIRO
     #TODO: Substituir para um indice de tamanhos
-    unsorted = open(str(rawPath+fileName),'rb')
+    unsorted = open(str(RAW_PATH + fileName), 'rb')
     for size, instance in enumerate(unsorted):
         pass
     unsorted.close()
@@ -154,9 +145,9 @@ def sortFile(fileName):
 # e chama-se a função unifyFiles 
 def createFiles(fileName, qtdLines, qtdFiles):
     content = []
-    with open(str(rawPath+fileName),'rb') as unsorted:
+    with open(str(RAW_PATH+fileName), 'rb') as unsorted:
         for i in range(0,qtdFiles):
-            with open(str(tempPath+'temp-'+str(qtdFiles)+'-'+str(i)),'wb') as base8:
+            with open(str(TEMP_PATH+ 'temp-'+str(qtdFiles)+ '-'+str(i)), 'wb') as base8:
                 for qtd in range(0,qtdLines):
                     content.append(unsorted.readline())
                 content.sort(key=lambda x:x[2:])
@@ -172,16 +163,16 @@ def unifyFiles(fileName, numFiles):
     toWrite = []
     i = 0
     if numFiles == 1:
-        result = subprocess.run(['mv', str(tempPath)+'temp-1-0', str(basePath)+str(fileName)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-        result = subprocess.run(['rm', '-r', str(tempPath)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-        result = subprocess.run(['mkdir', str(tempPath)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+        result = subprocess.run(['mv', str(TEMP_PATH) + 'temp-1-0', str(BASE_PATH) + str(fileName)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+        result = subprocess.run(['rm', '-r', str(TEMP_PATH)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+        result = subprocess.run(['mkdir', str(TEMP_PATH)], stdout=subprocess.PIPE).stdout.decode('utf-8')
         return
     while i < numFiles:
-        file0 = open(str(tempPath+'temp-'+str(numFiles)+'-'+str(i)),'rb')
-        file1 = open(str(tempPath+'temp-'+str(numFiles)+'-'+str(i+1)),'rb')
+        file0 = open(str(TEMP_PATH + 'temp-' + str(numFiles) + '-' + str(i)), 'rb')
+        file1 = open(str(TEMP_PATH + 'temp-' + str(numFiles) + '-' + str(i + 1)), 'rb')
         line0 = file0.readline()
         line1 = file1.readline()
-        with open(str(tempPath+'temp-'+str(numFiles//2)+'-'+str((i+1)//2)),'wb') as base8:
+        with open(str(TEMP_PATH+ 'temp-'+str(numFiles//2)+ '-'+str((i+1)//2)), 'wb') as base8:
             while line0 and line1:
                 if (line0[2:] <= line1[2:]):
                     base8.write(line0)
@@ -205,6 +196,13 @@ def unifyFiles(fileName, numFiles):
 #TODO: extender os arquivos importados e reordenar
 def extendTSV(mediaList):
     return 0
+
+def _create_media_from_row(row):
+    if len(row) < 9:
+        media = Media(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], 'Null')
+    else:
+        media = Media(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
+    return media
 
 def main():
     print("Testing")

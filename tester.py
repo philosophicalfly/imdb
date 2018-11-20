@@ -14,7 +14,7 @@ def printMenu():
     print ("2 - Ordenar database")
     print ("3 - Selecionar")
    #print ("4 - Adicionar extensão de dados CSV")
-    print ("N - Sair")
+    print ("0 - Sair")
 
 def printFooter():
     print ("\nDigite qualuqer coisa pra continuar.")

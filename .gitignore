@@ -7,3 +7,4 @@ data/base/*
 data/raw/*
 data/temp/*
 data/tsv/data.tsv
+.idea
