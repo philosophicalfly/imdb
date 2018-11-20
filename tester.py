@@ -5,6 +5,9 @@ from os import system
 from pprint import pprint
 import ast
 
+TSV_PATH = 'data/tsv/'
+
+
 def __init__():
     return 0
 
@@ -13,7 +16,7 @@ def printMenu():
     print ("1 - Importar nova base de dados CSV")
     print ("2 - Ordenar database")
     print ("3 - Selecionar")
-   #print ("4 - Adicionar extensão de dados CSV")
+    print ("4 - Adicionar extensão de dados CSV")
     print ("0 - Sair")
 
 def printFooter():
@@ -42,6 +45,19 @@ def show10in10(listOfIds):
         selected = Base_Handler.select(str(ids))
         print (ast.literal_eval(selected)[2])
 
+def get_tsv_file_choice():
+    system("clear")
+    print("\nLista de arquivos TSV para importação:\n")
+    result = subprocess.run(['ls', str(TSV_PATH)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+    list_of_files = result[:-1].split('\n')
+    for file in list_of_files:
+        print(file)
+    tsv_filename = input('\nDigite o TSV a ser importado: ')
+    if tsv_filename not in list_of_files:
+        print('\nNome de arquivo invalido.')
+        return None
+    return tsv_filename
+
 def main():
     mediaList = []
     todo=-1
@@ -50,10 +66,14 @@ def main():
         printMenu()
         todo = getMenuOption()
         if todo == 1:
-            print("\nRealizando importação... Operação pode ser demorada.")
-            TSV_Handler.importTSV(mediaList)
-            print("\nImportação finalizada.")
+            tsv_filename = get_tsv_file_choice()
+            if tsv_filename != None:
+                print("\nRealizando importação... Operação pode ser demorada.")
+                TSV_Handler.importTSV(mediaList, tsv_filename)
+                print("\nImportação finalizada.")
         elif todo == 2:
+            # TODO (maybe?): ajustar ordenacao para considerar ordem numerica em vez de alfabetica quando relevante
+            #               vide arquivo 'runtime', onde '45' estah vindo depois de '4' e antes de '5'
             print("\nRealizando ordenação... Operação pode ser demorada.")
             #TSV_Handler.sortDataInMemory()
             TSV_Handler.sortFiles()
@@ -69,6 +89,12 @@ def main():
                 show10in10(selectedIds)
             else:
                 print("Base de dados inexistente.")
+        elif todo == 4:
+            tsv_filename = get_tsv_file_choice()
+            if tsv_filename != None:
+                print("\nRealizando extensao dos dados com reordenacao... operacao pode ser bem demorada.")
+                TSV_Handler.extendTSV(mediaList, tsv_filename)
+                print("\nExtensao finalizada.")
         else:
             if todo == 0:
                 system('clear')

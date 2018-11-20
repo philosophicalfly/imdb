@@ -1,6 +1,7 @@
 import csv
 import subprocess
 from Media import Media
+import Base_Handler
 import sys
 import json
 import time
@@ -12,7 +13,6 @@ BASE_PATH = 'data/base/'
 TSV_PATH = 'data/tsv/'
 TSV_FILE = 'data40.tsv'
 TEMP_PATH = 'data/temp/'
-
 
 
 #importTSV(mediaList)
@@ -33,52 +33,25 @@ TEMP_PATH = 'data/temp/'
 # Há uma excessão para os arquivos, o arquivo 'id'. Esse arquivo contém todos os dados
 # completos da mesma forma que o TSV original, porém na forma de lista.
 #   Ex: ['tt0000012', 'short', 'The Arrival of a Train', "L'arrivée d'un train à La Ciotat", '0', '1896', '\\N', '1', 'Documentary,Short']
-def importTSV(mediaList):
-    isHeader = True
-    system("clear")
-    print ("\nLista de arquivos TSV para importação:\n")
-    result = subprocess.run(['ls', str(TSV_PATH)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-    listOfFiles = result[:-1].split('\n')
-    for file in listOfFiles:
-        print (file)
-    tsvFilename = input('\nDigite o TSV a ser importado: ')
+# TODO: verificar o que seria o parametro mediaList e se realmente precisamos dele
+def importTSV(mediaList, tsv_filename):
+    is_header = True
 
-    rawId = open(str(RAW_PATH + 'id'), 'wb')
-    rawType = open(str(RAW_PATH + 'type'), 'wb')
-    rawPryTitle = open(str(RAW_PATH + 'pryTitle'), 'wb')
-    rawOriTitle = open(str(RAW_PATH + 'oriTitle'), 'wb')
-    rawIsAdult = open(str(RAW_PATH + 'isAdult'), 'wb')
-    rawStartYear = open(str(RAW_PATH + 'startYear'), 'wb')
-    rawEndYear = open(str(RAW_PATH + 'endYear'), 'wb')
-    rawRuntime = open(str(RAW_PATH + 'runtime'), 'wb')
-    rawGenres = open(str(RAW_PATH + 'genres'), 'wb')
+    raw_list = _get_list_of_raw_files('wb')
 
-    rawList = [rawId, rawType, rawPryTitle, rawOriTitle, rawIsAdult, rawStartYear, rawEndYear, rawRuntime, rawGenres]
-    
-    with open(TSV_PATH+tsvFilename) as tsvFile:
+    with open(TSV_PATH+tsv_filename) as tsvFile:
         reader = csv.reader(tsvFile, delimiter='\t')
         for row in reader:
-            if isHeader:
-                isHeader = False
+            if is_header:
+                is_header = False
             else:
                 media = _create_media_from_row(row)
-                lineId = bytes(media.toCsvRow().encode('utf-8'))
-                lineType = bytes((str([media.type,media.tconst])+'\n').encode('utf8'))
-                linePryTitle = bytes((str([media.priTitle,media.tconst])+'\n').encode('utf8'))
-                lineOriTitle = bytes((str([media.oriTitle,media.tconst])+'\n').encode('utf8'))
-                lineIsAdult = bytes((str([media.isAdult,media.tconst])+'\n').encode('utf8'))
-                lineStartYear = bytes((str([media.startYear,media.tconst])+'\n').encode('utf8'))
-                lineEndYear = bytes((str([media.endYear,media.tconst])+'\n').encode('utf8'))
-                lineRuntime = bytes((str([media.runtime,media.tconst])+'\n').encode('utf8'))
-                lineGenres = bytes((str([media.genres, media.tconst]) +'\n').encode('utf-8'))
+                line_list = _get_list_of_filled_rows_to_insert(media)
+                for raw_instance, line_instance in zip(raw_list, line_list):
+                    raw_instance.write(line_instance)
 
-                lineList = [lineId,lineType,linePryTitle,lineOriTitle,lineIsAdult,lineStartYear,lineEndYear,lineRuntime,lineGenres]
-
-                for rawInstance, lineInstance in zip(rawList, lineList):
-                    rawInstance.write(lineInstance)
-
-    for rawFile in rawList:
-        rawFile.close()
+    for raw_file in raw_list:
+        raw_file.close()
 
 
 #sortDataInMemory()
@@ -118,7 +91,6 @@ def sortDataInMemory():
         base.close()
 
 
-
 def sortFiles():
     listOfFiles = ['id', 'type', 'pryTitle', 'oriTitle', 'isAdult', 'startYear', 'endYear', 'runtime', 'genres']
     for instance in listOfFiles:
@@ -136,6 +108,7 @@ def sortFile(fileName):
 
     #Chama o criador do 8 primeiros chunks
     createFiles(fileName, size//7, 8)
+
 
 #createFiles(qtdLines, qtdFiles):
 # cria o primeiro pack de chunks do arquivo principal
@@ -155,6 +128,8 @@ def createFiles(fileName, qtdLines, qtdFiles):
                     base8.write(line)
             content = []
     unifyFiles(fileName, 8)
+
+
 #unifyFiles(numFiles):
 # pega os 8 chunks anteriormente feitos e
 # recursivamente juntando os arquivos pequenos, linha a linha, 
@@ -192,10 +167,33 @@ def unifyFiles(fileName, numFiles):
             base8.write(line1)
         i += 2        
     unifyFiles(fileName, numFiles//2)
-        
-#TODO: extender os arquivos importados e reordenar
-def extendTSV(mediaList):
+
+
+# TODO: extender os arquivos importados e reordenar
+def extendTSV(mediaList, tsv_filename):
+    is_header = True
+
+    raw_list = _get_list_of_raw_files('ab')
+
+    with open(TSV_PATH+tsv_filename) as tsv_file:
+        reader = csv.reader(tsv_file, delimiter='\t')
+        for row in reader:
+            if is_header:
+                is_header = False
+            else:
+                media = _create_media_from_row(row)
+                already_exists = _media_already_exists(media)
+                if not already_exists:
+                    line_list = _get_list_of_filled_rows_to_insert(media)
+                    for raw_instance, line_instance in zip(raw_list, line_list):
+                        raw_instance.write(line_instance)
+
+    for raw_file in raw_list:
+        raw_file.close()
+
+    sortFiles()
     return 0
+
 
 def _create_media_from_row(row):
     if len(row) < 9:
@@ -204,12 +202,59 @@ def _create_media_from_row(row):
         media = Media(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
     return media
 
+
+def _get_list_of_raw_files(mode):
+    rawId = open(str(RAW_PATH + 'id'), mode)
+    rawType = open(str(RAW_PATH + 'type'), mode)
+    rawPryTitle = open(str(RAW_PATH + 'pryTitle'), mode)
+    rawOriTitle = open(str(RAW_PATH + 'oriTitle'), mode)
+    rawIsAdult = open(str(RAW_PATH + 'isAdult'), mode)
+    rawStartYear = open(str(RAW_PATH + 'startYear'), mode)
+    rawEndYear = open(str(RAW_PATH + 'endYear'), mode)
+    rawRuntime = open(str(RAW_PATH + 'runtime'), mode)
+    rawGenres = open(str(RAW_PATH + 'genres'), mode)
+
+    rawList = [rawId, rawType, rawPryTitle, rawOriTitle, rawIsAdult, rawStartYear, rawEndYear, rawRuntime, rawGenres]
+
+    return rawList
+
+
+def _get_list_of_filled_rows_to_insert(media):
+    lineId = bytes(media.toCsvRow().encode('utf-8'))
+    lineType = bytes((str([media.type, media.tconst]) + '\n').encode('utf8'))
+    linePryTitle = bytes((str([media.priTitle, media.tconst]) + '\n').encode('utf8'))
+    lineOriTitle = bytes((str([media.oriTitle, media.tconst]) + '\n').encode('utf8'))
+    lineIsAdult = bytes((str([media.isAdult, media.tconst]) + '\n').encode('utf8'))
+    lineStartYear = bytes((str([media.startYear, media.tconst]) + '\n').encode('utf8'))
+    lineEndYear = bytes((str([media.endYear, media.tconst]) + '\n').encode('utf8'))
+    lineRuntime = bytes((str([media.runtime, media.tconst]) + '\n').encode('utf8'))
+    lineGenres = bytes((str([media.genres, media.tconst]) + '\n').encode('utf-8'))
+
+    lineList = [lineId, lineType, linePryTitle, lineOriTitle, lineIsAdult, lineStartYear, lineEndYear, lineRuntime,
+                lineGenres]
+
+    return lineList
+
+
+# TODO: Pensar em jeitos de otimizar isso
+#       ex.: usar metodos em Finders.py
+#       ex.: manter um arquivo de tconst's presentes e ordenados e fazer pesquisa binaria nele
+#               (no caso de uma pesquisa binaria no arquivo id ficar muito ruim pelo excesso de informacoes nele)
+def _media_already_exists(media):
+    already_exists = False
+    occurrences = Base_Handler.getIdOf(media.tconst,'id')
+    if len(occurrences) > 0:
+        already_exists = True
+    return already_exists
+
+
 def main():
     print("Testing")
     listOfFiles = ['id', 'type', 'pryTitle', 'oriTitle', 'isAdult', 'startYear', 'endYear', 'runtime', 'genres']
     for instance in listOfFiles:
         sortFile(instance)
     exit()
+
 
 if __name__ == "__main__":
     main()
