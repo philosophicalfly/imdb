@@ -16,7 +16,7 @@ def printMenu():
     print ("1 - Importar nova base de dados CSV")
     print ("2 - Ordenar database")
     print ("3 - Selecionar")
-   #print ("4 - Adicionar extensão de dados CSV")
+    print ("4 - Adicionar extensão de dados CSV")
     print ("0 - Sair")
 
 def printFooter():
@@ -72,6 +72,8 @@ def main():
                 TSV_Handler.importTSV(mediaList, tsv_filename)
                 print("\nImportação finalizada.")
         elif todo == 2:
+            # TODO (maybe?): ajustar ordenacao para considerar ordem numerica em vez de alfabetica quando relevante
+            #               vide arquivo 'runtime', onde '45' estah vindo depois de '4' e antes de '5'
             print("\nRealizando ordenação... Operação pode ser demorada.")
             #TSV_Handler.sortDataInMemory()
             TSV_Handler.sortFiles()
@@ -87,6 +89,12 @@ def main():
                 show10in10(selectedIds)
             else:
                 print("Base de dados inexistente.")
+        elif todo == 4:
+            tsv_filename = get_tsv_file_choice()
+            if tsv_filename != None:
+                print("\nRealizando extensao dos dados com reordenacao... operacao pode ser bem demorada.")
+                TSV_Handler.extendTSV(mediaList, tsv_filename)
+                print("\nExtensao finalizada.")
         else:
             if todo == 0:
                 system('clear')
