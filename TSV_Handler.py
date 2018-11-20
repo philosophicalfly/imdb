@@ -33,15 +33,9 @@ TEMP_PATH = 'data/temp/'
 # Há uma excessão para os arquivos, o arquivo 'id'. Esse arquivo contém todos os dados
 # completos da mesma forma que o TSV original, porém na forma de lista.
 #   Ex: ['tt0000012', 'short', 'The Arrival of a Train', "L'arrivée d'un train à La Ciotat", '0', '1896', '\\N', '1', 'Documentary,Short']
-def importTSV(mediaList):
+# TODO: verificar o que seria o parametro mediaList e se realmente precisamos dele
+def importTSV(mediaList, tsv_filename):
     isHeader = True
-    system("clear")
-    print ("\nLista de arquivos TSV para importação:\n")
-    result = subprocess.run(['ls', str(TSV_PATH)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-    listOfFiles = result[:-1].split('\n')
-    for file in listOfFiles:
-        print (file)
-    tsvFilename = input('\nDigite o TSV a ser importado: ')
 
     rawId = open(str(RAW_PATH + 'id'), 'wb')
     rawType = open(str(RAW_PATH + 'type'), 'wb')
@@ -55,7 +49,7 @@ def importTSV(mediaList):
 
     rawList = [rawId, rawType, rawPryTitle, rawOriTitle, rawIsAdult, rawStartYear, rawEndYear, rawRuntime, rawGenres]
     
-    with open(TSV_PATH+tsvFilename) as tsvFile:
+    with open(TSV_PATH+tsv_filename) as tsvFile:
         reader = csv.reader(tsvFile, delimiter='\t')
         for row in reader:
             if isHeader:
