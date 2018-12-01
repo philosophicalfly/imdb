@@ -2,6 +2,7 @@ import csv
 import subprocess
 from Media import Media
 import Base_Handler
+import Finders
 import sys
 import json
 import time
@@ -241,10 +242,18 @@ def _get_list_of_filled_rows_to_insert(media):
 #       ex.: manter um arquivo de tconst's presentes e ordenados e fazer pesquisa binaria nele
 #               (no caso de uma pesquisa binaria no arquivo id ficar muito ruim pelo excesso de informacoes nele)
 def _media_already_exists(media):
+    #already_exists = False
+    #occurrences = Base_Handler.getIdOf(media.tconst,'id')
+    #if len(occurrences) > 0:
+    #    already_exists = True
+    #return already_exists
     already_exists = False
-    occurrences = Base_Handler.getIdOf(media.tconst,'id')
-    if len(occurrences) > 0:
-        already_exists = True
+    try:
+        entry = Base_Handler.select(media.tconst)
+        if entry != []:
+            already_exists = True
+    except:
+        pass
     return already_exists
 
 
