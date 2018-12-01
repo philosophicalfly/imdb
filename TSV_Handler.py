@@ -1,5 +1,7 @@
 import csv
 import subprocess
+import shutil
+import os
 from Media import Media
 import Base_Handler
 import Finders
@@ -16,6 +18,7 @@ TSV_FILE = 'data40.tsv'
 TEMP_PATH = 'data/temp/'
 UPDATE_RAW_PATH = 'data/updateTemp/raw/'
 UPDATE_BASE_PATH = 'data/updateTemp/base/'
+MERGED_BASE_PATH = 'data/updateTemp/merged/'
 
 
 #importTSV(mediaList)
@@ -177,6 +180,7 @@ def extendTSV(mediaList, tsv_filename):
     is_header = True
 
     raw_list = _get_list_of_raw_files(UPDATE_RAW_PATH, 'ab')
+    existing_raw_list = _get_list_of_raw_files(RAW_PATH, 'ab')
 
     with open(TSV_PATH+tsv_filename) as tsv_file:
         reader = csv.reader(tsv_file, delimiter='\t')
@@ -188,13 +192,24 @@ def extendTSV(mediaList, tsv_filename):
                 already_exists = _media_already_exists(media)
                 if not already_exists:
                     line_list = _get_list_of_filled_rows_to_insert(media)
-                    for raw_instance, line_instance in zip(raw_list, line_list):
+                    for raw_instance, existing_raw_instance, line_instance \
+                            in zip(raw_list, existing_raw_list, line_list):
                         raw_instance.write(line_instance)
+                        existing_raw_instance.write(line_instance)
 
     for raw_file in raw_list:
         raw_file.close()
 
     sortFiles(UPDATE_RAW_PATH, UPDATE_BASE_PATH)
+    index_files = _get_list_of_index_file_names()
+    for index_file in index_files:
+        _merge_base_file(BASE_PATH + index_file, UPDATE_BASE_PATH + index_file,
+                         MERGED_BASE_PATH + index_file)
+    # doing two for loops so it will only move the files when we already have everything updated
+    for index_file in index_files:
+        shutil.move(MERGED_BASE_PATH + index_file, BASE_PATH + index_file)
+        os.remove(UPDATE_RAW_PATH + index_file)
+        os.remove(UPDATE_BASE_PATH + index_file)
     return 0
 
 
@@ -253,6 +268,35 @@ def _media_already_exists(media):
     except:
         pass
     return already_exists
+
+
+def _merge_base_file(file_path_one, file_path_two, destiny):
+    file_one = open(file_path_one, 'rb')
+    file_two = open(file_path_two, 'rb')
+    line_one = file_one.readline()
+    line_two = file_two.readline()
+    with open(destiny, 'wb') as file_destiny:
+        while line_one and line_two:
+            if (line_one[2:] <= line_two[2:]):
+                file_destiny.write(line_one)
+                line_one = file_one.readline()
+                if not line_one:
+                    line_one = file_two.readline()
+            elif (line_one[2:] >= line_two[2:]):
+                file_destiny.write(line_two)
+                line_two = file_two.readline()
+                if not line_two:
+                    line_two = file_one.readline()
+        file_destiny.write(line_one)
+        file_destiny.write(line_two)
+    file_one.close()
+    file_two.close()
+    return
+
+
+def _get_list_of_index_file_names():
+    return ['id', 'type', 'pryTitle', 'oriTitle', 'isAdult', 'startYear', 'endYear', 'runtime', 'genres']
+
 
 
 def main():
