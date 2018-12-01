@@ -6,5 +6,7 @@ tester.pyc
 data/base/*
 data/raw/*
 data/temp/*
+data/updateTemp/base/*
+data/updateTemp/raw/*
 data/tsv/data.tsv
 .idea
