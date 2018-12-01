@@ -59,6 +59,7 @@ def get_tsv_file_choice():
     return tsv_filename
 
 def main():
+    TSV_Handler.enforce_required_folder_structure()
     mediaList = []
     todo=-1
     listOfFiles = ['id', 'type', 'pryTitle', 'oriTitle', 'isAdult', 'startYear', 'endYear', 'runtime', 'genres']

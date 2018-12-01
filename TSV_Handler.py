@@ -11,6 +11,7 @@ import time
 
 from os import system
 
+
 RAW_PATH = 'data/raw/'
 BASE_PATH = 'data/base/'
 TSV_PATH = 'data/tsv/'
@@ -19,6 +20,15 @@ TEMP_PATH = 'data/temp/'
 UPDATE_RAW_PATH = 'data/updateTemp/raw/'
 UPDATE_BASE_PATH = 'data/updateTemp/base/'
 MERGED_BASE_PATH = 'data/updateTemp/merged/'
+REQUIRED_FOLDERS = [
+    RAW_PATH,
+    BASE_PATH,
+    TSV_PATH,
+    TEMP_PATH,
+    UPDATE_RAW_PATH,
+    UPDATE_BASE_PATH,
+    MERGED_BASE_PATH
+]
 
 
 #importTSV(mediaList)
@@ -298,9 +308,15 @@ def _get_list_of_index_file_names():
     return ['id', 'type', 'pryTitle', 'oriTitle', 'isAdult', 'startYear', 'endYear', 'runtime', 'genres']
 
 
+# TODO: move this to a more appropriate place
+def enforce_required_folder_structure():
+    for folder in REQUIRED_FOLDERS:
+        if not os.path.exists(folder):
+            os.makedirs(folder, exist_ok=True)
 
 def main():
     print("Testing")
+    enforce_required_folder_structure()
     sortFiles()
     exit()
 
