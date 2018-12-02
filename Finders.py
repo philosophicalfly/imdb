@@ -2,10 +2,19 @@
 # -*- coding: utf-8 -*-
 import os
 import ast
-import logging
+import logging as log
 import time
+import subprocess
+import json
 
+import collections
 DEPTH = 2  #  Profundidade da arvore trie
+
+
+# Antes de usar qualquer coisa daqui,
+# Execute o script tester.py
+# insira a base de dados & ordene ela
+
 
 #linearIdFind(id):
 # id = string
@@ -148,6 +157,7 @@ def makeIndexTitle(listTitles):
         indice = addTitleToIndex(registro, indice)
     return indice
 
+
 def addTitleToIndex(register, indice):
     """
     Adiciona um register(titulo, id) a arvore quase trie de indices existente
@@ -181,7 +191,7 @@ def addTitleToIndex(register, indice):
     return indice
     
 
-def searchIdFromTitle(index, string):
+def searchIdinTrie(index, string):
     """
     Procura por uma string na arvore quase 'trie' de indices, 
     retorna uma lista de registros do formato[titulo, id]
@@ -201,9 +211,182 @@ def searchIdFromTitle(index, string):
     return registros
 
 
-#Utilidade unica para testes
-def main():
+# New Struct Data, the classic Trie, using dicts instead of struct with pointers
+def addInfoToTrie(chave, id, trie):
     """
+    Adiciona uma chave apontando para um id na árvore trie dada.
+    a chave é quebrada em várias chaves separadas pelos espaços.
+    """
+    key_list = chave.split(" ")
+
+    for key in key_list:
+        lenght = len(key)
+        if lenght < 3:
+            continue
+
+        key = key.lower()
+        level = trie
+        i = 0
+
+        while i < lenght:
+            if key[i] not in level:
+                level[ key[i] ] = dict()
+            level = level[ key[i] ]
+            i = i + 1
+
+        if 'info' not in level:
+            level['info'] = [id]
+        else:
+            level['info'].append(id)
+    return trie
+
+
+def searchInfoInTrie(chave, trie):
+    """
+    Retorna uma lista com os resultados que contenham todas as palavras da
+    chave recebida, menos as palavras com até 2 letras.
+    """
+    search_result = []
+
+    key_list = chave.lower().split(" ")    
+    for key in key_list:
+        i = 0
+        lenght = len(key)
+        #  possivelmente stopword ( ex. 'do', 'da', 'at', 'in')
+        level = trie
+        find = True
+
+        while i < lenght and find:
+            if key[i] in level:
+                level = level[ key[i] ]
+                i = i+1
+            else:
+                find = False
+        
+        if key[-1] == '*':
+            #  TODO: selecionar todos os resultados a partir desse nodo
+            log.debug('Union in the search for Prefix:')
+            search_result.append( unionAllTrie( level ))
+        elif find:
+            if 'info' in level:
+                search_result.append( level['info'] )      
+
+    #  TODO: intersection between the results
+    print('\nresults:\n%s' % search_result)
+    return search_result
+
+
+def unionAllTrie(trie):
+    """
+    Une todos os registros guardados na TRIE recebida em uma única lista
+    return: lista,
+    """
+    results = []
+    if 'info' in trie:
+        results = trie['info']
+
+    for key in trie:
+        if key != 'info':
+            results.extend( unionAllTrie( trie[key] ))
+    return results
+
+
+def saveFirstTrie(address, trie):
+    """
+    Salva a trie como ela está no local especificado
+    Não se preocupa se há outra trie ĺá ou não
+    """
+    with open(address, mode='wb') as arq:
+	   # Transform the struct Trie ( that use Dicts ) in JSON format,
+	   # encode the string in Bytes of format 'utf-8' 
+	   # and save in byte file
+        json_string = json.dumps(trie)
+        encode_string = json_string.encode( encoding='utf-8' )
+        arq.write( encode_string )
+    log.info('Save Trie in disk complete')
+
+
+def loadTrie(address):
+    """
+    Carrega toda a trie na memória
+    """
+    with open(address, mode='rb') as arq:
+        encode_string = arq.read()
+        json_string = encode_string.decode( encoding='utf-8' )
+        trie = json.loads(json_string)
+    return trie
+
+
+def test_prefix_tree():
+    log.basicConfig(level='DEBUG', format='%(funcName)10s[%(lineno)d]: %(msg)s')
+    log.debug('DEBUG')
+    log.info('INFO')
+    log.warn('WARN')
+    log.error('ERROR')
+    print('LOGS /\\')
+
+    # Loading raw data after the slicing by fields of the TSV files 
+    raw_pryTitle = []
+    with open('data/raw/pryTitle', 'r') as baseFile:
+        for line in baseFile:
+            raw_pryTitle.append([ast.literal_eval(line)[0], ast.literal_eval(line)[1]])
+    
+    # Creating and adding data in the trie
+    trie = dict()
+    for reg in raw_pryTitle:
+        addInfoToTrie(reg[0], reg[1], trie)
+    
+    saveFirstTrie('data/indice_pryTitle', trie)
+
+    # Testando a trie, buscando por um prefixo e usando wildcard
+    search_results = searchInfoInTrie('r*', trie)
+    lista_resumida = []
+    for lista_results in search_results:
+        for result in lista_results:
+            if result not in lista_resumida:
+                lista_resumida.append(result)
+
+    log.info('Resultados: ')
+    for titulo_id in raw_pryTitle:
+        if titulo_id[1] in lista_resumida:
+            log.info('[%s]-> %s' % (titulo_id[1], titulo_id[0]))
+    
+
+    # testando o carregamento do disco para memória da trie
+    log.info('Loading trie')
+    loadedTrie = loadTrie('data/indice_pryTitle')
+    log.info('\n')
+
+    
+
+
+def test_almost_trie():
+    """
+    Teste da arvore quase trie de indices
+    """
+
+    string_buscada = 'wa'
+    inicio = time.time()
+    
+    #lista = getPryTitleList('', 'pryTitle')
+    lista = []
+    with open('data/raw/pryTitle', 'r') as baseFile:
+        for line in baseFile:
+            lista.append([ast.literal_eval(line)[0], ast.literal_eval(line)[1]])
+    indice = makeIndexTitle(lista)
+    
+    index_time = time.time()
+    registro1 = searchIdinTrie(indice, string_buscada)
+    
+    end_time = time.time()
+
+    print('Numero de registros: %s' % len(lista))
+    print('Palavra procurada: "%s"' % string_buscada)
+    print('Tempo de indexacao: \t\t\t    %f' % (index_time - inicio))
+    print("trie busca: resultados: %s, tempo: %f" % (len(registro1), end_time - tempo_index))
+
+
+def test_binaryFind():
     ehSubs = lambda val: ast.literal_eval(val)[0]
     for i in range(1,10):
         print(binaryIdFind('data/base/id', 'tt000000'+str(i), ehSubs))
@@ -214,26 +397,18 @@ def main():
     for i in range(168,1000):
         print(binaryIdFind('data/base/id', 'tt0000'+str(i), ehSubs))
     #print(lineFind('id', 'tt0000020', ehSubs))
-"""
-    # Teste da arvore quase trie de indices
-    string_buscada = 'wa'
-    inicio = time.time()
-    #lista = getPryTitleList('', 'pryTitle')
-    lista = []
-    with open('data/base/pryTitle', 'r') as baseFile:
-        for line in baseFile:
-            lista.append([ast.literal_eval(line)[0], ast.literal_eval(line)[1]])
-    indice = makeIndexTitle(lista)
-    #print(json.dumps(indice, sort_keys=True, indent=4))
-    tempo_index = time.time()
-    registro1 = searchIdFromTitle(indice, string_buscada)
-    #print(json.dumps(registro1, indent=2))
-    end = time.time()
 
-    print('Numero de registros: %s' % len(lista))
-    print('Palavra procurada: "%s"' % string_buscada)
-    print('Tempo de indexacao: \t\t\t    %f' % (tempo_index - inicio))
-    print("trie busca: resultados: %s, tempo: %f" % (len(registro1), end - tempo_index))
+
+#Utilidade unica para testes
+def main():
+    # arvore com apenas o inicio das palavras
+    test_prefix_tree()
+
+    # arvore com todas as partes das palavras.
+    #test_almost_trie()
+
+    # busca binária em um arquivo
+    #test_binaryFind()
     
 
 if __name__ == "__main__":
