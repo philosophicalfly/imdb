@@ -48,17 +48,17 @@ def binaryIdFind(filename, matchvalue, key=lambda val: val):
     >>> line_binary_search('sd-arc', 63889187, parser)
     ['63889187\t3592559\n', ...]
     """
-    logging.propagate = False
+    log.propagate = False
     # Must be greater than the maximum length of any line.
-    logging.debug(' Serching for '+str(matchvalue))
-    logging.debug('          in  '+str(filename))
-    logging.debug('w/ parameter  '+str(matchvalue[-3:]))
+    log.debug(' Serching for '+str(matchvalue))
+    log.debug('          in  '+str(filename))
+    log.debug('w/ parameter  '+str(matchvalue[-3:]))
 
     max_line_len = 2 ** 12
-    logging.debug(' Max lenght of Line: '+str(max_line_len))
+    log.debug(' Max lenght of Line: '+str(max_line_len))
     start = pos = 0
     end = os.path.getsize(filename)
-    logging.debug(' End of File = ' + str(end)+' bytes')
+    log.debug(' End of File = ' + str(end)+' bytes')
     counter = 0
     lastMin = 0
     with open(filename, 'rb') as fptr:
@@ -76,9 +76,9 @@ def binaryIdFind(filename, matchvalue, key=lambda val: val):
 
         # Limit the number of times we binary search.
         for rpt in range(50):
-            logging.debug('lastmin = '+ str(lastMin))
-            logging.debug(' Start: |  '+ str(start))
-            logging.debug(' End  : |  '+ str(end))
+            log.debug('lastmin = '+ str(lastMin))
+            log.debug(' Start: |  '+ str(start))
+            log.debug(' End  : |  '+ str(end))
             last = pos
             pos = start + ((end - start) // 2)
             fptr.seek(pos)
@@ -87,8 +87,8 @@ def binaryIdFind(filename, matchvalue, key=lambda val: val):
             fptr.readline()
             line = fptr.readline().decode('utf8')
             linevalue = key(line)
-            logging.debug(' Line == Match | '+ str(linevalue) + ' = '+ str(matchvalue))
-            logging.debug(' Pos  == Last  | '+ str(pos) + ' = '+ str(last))
+            log.debug(' Line == Match | '+ str(linevalue) + ' = '+ str(matchvalue))
+            log.debug(' Pos  == Last  | '+ str(pos) + ' = '+ str(last))
             if linevalue == matchvalue or pos == last:
                 #return(line)
                 #print(line)
@@ -101,14 +101,14 @@ def binaryIdFind(filename, matchvalue, key=lambda val: val):
                         break
                # Seek forward to the first match.
                 while fptr.tell() < end:
-                    logging.debug('End  = '+str(end))
-                    logging.debug('Fptr = '+str(fptr.tell()))
-                    logging.debug(counter)
+                    log.debug('End  = '+str(end))
+                    log.debug('Fptr = '+str(fptr.tell()))
+                    log.debug(counter)
                     counter += 1  
                     line = fptr.readline().decode('utf8')
                     linevalue = key(line)     
                     if matchvalue == linevalue:
-                        logging.debug('Repeats = '+str(counter))
+                        log.debug('Repeats = '+str(counter))
                         break
                 else:
                     # No match was found.
