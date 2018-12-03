@@ -10,6 +10,18 @@ import json
 import collections
 DEPTH = 2  #  Profundidade da arvore trie
 
+MAX_CHAR_FOR_POST = 50  # o número de chars in cada registro(linha) do POST
+SIZE_OF_EACH_RECORD = len('"tt0000000", ')
+
+#  número de IDs salvados em cada linha do arquivo de Post
+#  hard defined:
+#ID_FOR_POST = 10  
+#  DINAMIC
+ID_FOR_POST = int((MAX_CHAR_FOR_POST -10 -len('[]\n')) / SIZE_OF_EACH_RECORD)  
+
+POST_FILE = 'data/post_ids'
+TRIE_FILE = 'data/indice_pryTitle'
+
 
 # Antes de usar qualquer coisa daqui,
 # Execute o script tester.py
@@ -211,6 +223,111 @@ def searchIdinTrie(index, string):
     return registros
 
 
+# Another struct, an Invert File ( also named POSTING)
+# each line has between 1 and 10 IDs, and the 11 position is the next line
+# Each Line has 146 characters
+# each ID has 11 chars plus 2 aspas, plus 2 chars of blackets, plus
+def encodeInfo(info, encode='utf-8'):
+    json_string = json.dumps(info)
+    json_string = json_string.ljust(MAX_CHAR_FOR_POST-1)
+    json_string = json_string + '\n'
+    encoded_string = json_string.encode( encoding='utf-8' )
+    return encoded_string
+
+
+def savePost(info, position=None, file=POST_FILE):
+    """
+    Save the <info> in the <position> inside the <file>
+    If <position> is None, save in the end of the file.
+    if the <position> is already full ( len() > ID_FOR_POST), 
+    append one line to the end of file, 
+    'apponts' the last position of the actual line to the last line added,
+    and added the info inside the last line
+    return: position where
+    """
+    data = []
+    new_position = position
+    initial_position = position
+    old_data = None
+    EOF = 0
+
+    log.info('Saving %s in chain %s' % (info, position))
+    try:
+        arq = open(file, 'r+b')
+    except FileNotFoundError:
+        arq = open(file, 'w+b')
+
+    if position is None:
+        # Create list in post
+        new_position = arq.seek(0, 2)
+        encoded_string = encodeInfo([info])
+        arq.write(encoded_string)
+    else:
+        # Append list with the INFO or the address and create list in the end of file
+        while loadLine(position, data, arq):
+            position = data[-1]
+            data = []
+
+        if len(data) == ID_FOR_POST:
+            new_position = arq.seek(0, 2) # jump to the end of the file
+            old_data = data
+            data = [info]
+        else:
+            arq.seek(position)
+            data.append(info)
+        
+        encoded_string = encodeInfo(data)
+
+        log.debug('%r [%s]' % (encoded_string, len(encoded_string)))
+        log.debug('%r' % encoded_string)
+        arq.write( encoded_string )
+
+        if old_data is not None:
+            old_data.append( new_position )
+            arq.seek(position, 0)
+            json_string = json.dumps(old_data)
+            json_string = json_string.ljust(MAX_CHAR_FOR_POST-1) + '\n'
+            encoded_string = json_string.encode( encoding='utf-8' )
+            arq.write( encoded_string )
+    return new_position
+
+
+def loadLine(position, content, file):
+    """
+    read one line from the <file> in the <position>
+    save in <content> 
+    return: True if has an address in the end of the line.
+            False, if not
+    """
+    log.debug("Reading chain %s" % position)
+    file.seek(position)
+    raw_string = file.readline()
+    json_string = raw_string.decode( encoding='utf-8' )
+    data_list = json.loads(json_string)
+
+    content.extend(data_list)
+
+    if len(data_list) > ID_FOR_POST:
+        return 1
+    else:
+        return 0
+
+
+def loadPost(position, file=POST_FILE):
+    """
+    Read an serie of chains of lines in the Post file, begin in the 
+    line of 'postion' and ending in the end of the chain.
+    Return: an list with all the lines decoded.
+    """
+    data = []
+    with open(file, 'rb') as arq:
+        while loadLine(position, data, arq):
+            position = data[-1]
+            del data[-1]
+
+    return data
+
+
 # New Struct Data, the classic Trie, using dicts instead of struct with pointers
 def addInfoToTrie(chave, id, trie):
     """
@@ -235,9 +352,9 @@ def addInfoToTrie(chave, id, trie):
             i = i + 1
 
         if 'info' not in level:
-            level['info'] = [id]
+            level['info'] = savePost(id)
         else:
-            level['info'].append(id)
+            savePost(id, position=level['info'])
     return trie
 
 
@@ -269,10 +386,10 @@ def searchInfoInTrie(chave, trie):
             search_result.append( unionAllTrie( level ))
         elif find:
             if 'info' in level:
-                search_result.append( level['info'] )      
+                search_result.append( loadPost(level['info']) )      
 
     #  TODO: intersection between the results
-    print('\nresults:\n%s' % search_result)
+    log.debug('\nresults:\n%s' % search_result)
     return search_result
 
 
@@ -283,7 +400,7 @@ def unionAllTrie(trie):
     """
     results = []
     if 'info' in trie:
-        results = trie['info']
+        results = loadPost(trie['info'])
 
     for key in trie:
         if key != 'info':
@@ -297,9 +414,9 @@ def saveFirstTrie(address, trie):
     Não se preocupa se há outra trie ĺá ou não
     """
     with open(address, mode='wb') as arq:
-	   # Transform the struct Trie ( that use Dicts ) in JSON format,
-	   # encode the string in Bytes of format 'utf-8' 
-	   # and save in byte file
+       # Transform the struct Trie ( that use Dicts ) in JSON format,
+       # encode the string in Bytes of format 'utf-8' 
+       # and save in byte file
         json_string = json.dumps(trie)
         encode_string = json_string.encode( encoding='utf-8' )
         arq.write( encode_string )
@@ -318,12 +435,7 @@ def loadTrie(address):
 
 
 def test_prefix_tree():
-    log.basicConfig(level='DEBUG', format='%(funcName)10s[%(lineno)d]: %(msg)s')
-    log.debug('DEBUG')
-    log.info('INFO')
-    log.warn('WARN')
-    log.error('ERROR')
-    print('LOGS /\\')
+    log.debug('LOGS /\\')
 
     # Loading raw data after the slicing by fields of the TSV files 
     raw_pryTitle = []
@@ -357,7 +469,22 @@ def test_prefix_tree():
     loadedTrie = loadTrie('data/indice_pryTitle')
     log.info('\n')
 
-    
+
+def test_post():
+    log.info('Testing inverted file (POSTING)')
+    log.info('ID_FOR_POST: %s' % ID_FOR_POST)
+    FILE = 'data/test_post'
+    pos = []
+    pos.append( (savePost('f0', file=FILE), 'f0') )
+    pos.append( (savePost('f1', file=FILE), 'f1') )
+    pos.append( (savePost('f2', file=FILE), 'f2') )
+    pos.append( (savePost('f3', file=FILE), 'f3') )
+    log.info('positions save: %s' % (pos))
+
+    log.info('antes: %s' % loadPost(0, file=FILE))
+    for i in range(1, 15):
+        savePost('f0'+str(i), 0, file=FILE)
+    log.info('depois: %s' % loadPost(0, file=FILE))
 
 
 def test_almost_trie():
@@ -401,8 +528,14 @@ def test_binaryFind():
 
 #Utilidade unica para testes
 def main():
+    log.basicConfig(level='DEBUG', format='%(funcName)10s[%(lineno)d]: %(msg)s')
+    log.debug('DEBUG')
+    log.info('INFO')
+    log.warn('WARN')
+    log.error('ERROR')
     # arvore com apenas o inicio das palavras
     test_prefix_tree()
+    #test_post()
 
     # arvore com todas as partes das palavras.
     #test_almost_trie()
