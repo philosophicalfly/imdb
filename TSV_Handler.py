@@ -102,15 +102,40 @@ def sortDataInMemory():
         raw.close()
         content.sort(key=lambda x:x[2:])
         for line in content:
-            #print(line)
+            print(line)
             base.write(line)
         base.close()
+    return
 
 
 def sortFiles(raw_path=RAW_PATH, base_path=BASE_PATH):
     listOfFiles = ['id', 'type', 'pryTitle', 'oriTitle', 'isAdult', 'startYear', 'endYear', 'runtime', 'genres']
     for instance in listOfFiles:
-        sortFile(raw_path, base_path, instance)
+        if instance == 'pryTitle':
+            createAndSaveTrie(raw_path, base_path, instance)
+        else:
+            sortFile(raw_path, base_path, instance)
+
+
+def createAndSaveTrie(raw_path, base_path, fileName):
+    trie = None
+    try:
+        trie = Finders.loadTrie(str(base_path+fileName))
+    except:
+        trie = dict()
+
+    with open(str(raw_path+fileName), 'rb') as unsorted:
+        for str_line in unsorted:
+
+            lista = str_line.decode(encoding='utf-8')
+            print("%r" % lista)
+            print(json.loads(lista))
+
+            Finders.addInfoToTrie(chave=lista[0], info=lista[1], trie=trie)
+    print(trie)
+    Finders.saveTrie(str(base_path+fileName), trie=trie)
+
+
 #sortFile()
 # ordena os dados de um único arquivo em data/temp utilizando
 # um merge sort no disco rígido
@@ -129,7 +154,7 @@ def sortFile(raw_path, base_path, fileName):
 #createFiles(qtdLines, qtdFiles):
 # cria o primeiro pack de chunks do arquivo principal
 # aqui estou separando tudo em 8 chunks
-# ao criar um chunk, ordena ele em meória
+# ao criar um chunk, ordena ele em memória
 # ao final da função, tem-se 8 chunks ordenados separadamente
 # e chama-se a função unifyFiles 
 def createFiles(raw_path, base_path, fileName, qtdLines, qtdFiles):

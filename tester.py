@@ -17,6 +17,7 @@ def printMenu():
     print ("2 - Ordenar database")
     print ("3 - Selecionar")
     print ("4 - Adicionar extensão de dados CSV")
+    print ("5 - Remover um registro")
     print ("0 - Sair")
 
 def printFooter():
@@ -96,6 +97,24 @@ def main():
                 print("\nRealizando extensao dos dados com reordenacao... operacao pode ser bem demorada.")
                 TSV_Handler.extendTSV(mediaList, tsv_filename)
                 print("\nExtensao finalizada.")
+        elif todo == 5:
+            id = input('Digite o id do registro: ')
+            # Sanitização
+            i=0
+            while i < len(id):
+                if id[i] == 't':
+                    id = id[1:]
+                    i = 0
+                elif '0' <= id[i] and id[i] <= '9':
+                    i += 1
+                else:
+                    id = input('ID não é válido. Digite um novo ID:')
+                    i = 0
+            
+            # completing the ID
+            id = 'tt' + '0' * (7 - len(id)) + id
+                        
+            print('id correto: %r' % id)
         else:
             if todo == 0:
                 system('clear')

@@ -251,7 +251,7 @@ def savePost(info, position=None, file=POST_FILE):
     old_data = None
     EOF = 0
 
-    log.info('Saving %s in chain %s' % (info, position))
+    log.debug('Saving %s in chain %s' % (info, position))
     try:
         arq = open(file, 'r+b')
     except FileNotFoundError:
@@ -299,7 +299,7 @@ def loadLine(position, content, file):
     return: True if has an address in the end of the line.
             False, if not
     """
-    log.debug("Reading chain %s" % position)
+    #log.debug("Reading chain %s" % position)
     file.seek(position)
     raw_string = file.readline()
     json_string = raw_string.decode( encoding='utf-8' )
@@ -329,13 +329,14 @@ def loadPost(position, file=POST_FILE):
 
 
 # New Struct Data, the classic Trie, using dicts instead of struct with pointers
-def addInfoToTrie(chave, id, trie):
+def addInfoToTrie(chave, info, trie):
     """
-    Adiciona uma chave apontando para um id na árvore trie dada.
+    Adiciona uma chave apontando para pedaço de memória em um info na árvore trie dada.
     a chave é quebrada em várias chaves separadas pelos espaços.
     """
     key_list = chave.split(" ")
-
+    print(chave)
+    print('key list %s' % key_list)
     for key in key_list:
         lenght = len(key)
         if lenght < 3:
@@ -351,10 +352,11 @@ def addInfoToTrie(chave, id, trie):
             level = level[ key[i] ]
             i = i + 1
 
+
         if 'info' not in level:
-            level['info'] = savePost(id)
+            level['info'] = savePost(info)
         else:
-            savePost(id, position=level['info'])
+            savePost(info, position=level['info'])
     return trie
 
 
@@ -408,7 +410,7 @@ def unionAllTrie(trie):
     return results
 
 
-def saveFirstTrie(address, trie):
+def saveTrie(address, trie):
     """
     Salva a trie como ela está no local especificado
     Não se preocupa se há outra trie ĺá ou não
@@ -448,17 +450,17 @@ def test_prefix_tree():
     for reg in raw_pryTitle:
         addInfoToTrie(reg[0], reg[1], trie)
     
-    saveFirstTrie('data/indice_pryTitle', trie)
+    saveTrie('data/indice_pryTitle', trie)
 
     # Testando a trie, buscando por um prefixo e usando wildcard
-    search_results = searchInfoInTrie('r*', trie)
+    search_results = searchInfoInTrie('race', trie)
     lista_resumida = []
     for lista_results in search_results:
         for result in lista_results:
             if result not in lista_resumida:
                 lista_resumida.append(result)
 
-    log.info('Resultados: ')
+    log.info('Resultados: (%s)' % len(lista_resumida))
     for titulo_id in raw_pryTitle:
         if titulo_id[1] in lista_resumida:
             log.info('[%s]-> %s' % (titulo_id[1], titulo_id[0]))
@@ -528,7 +530,7 @@ def test_binaryFind():
 
 #Utilidade unica para testes
 def main():
-    log.basicConfig(level='DEBUG', format='%(funcName)10s[%(lineno)d]: %(msg)s')
+    log.basicConfig(level='INFO', format='%(funcName)10s[%(lineno)d]: %(msg)s')
     log.debug('DEBUG')
     log.info('INFO')
     log.warn('WARN')
