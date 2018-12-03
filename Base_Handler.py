@@ -65,11 +65,15 @@ def selectList(idList):
 #      http://www.grantjenks.com/wiki/random/python_binary_search_file_by_line
 def getIdOf(value, base):
     idList = []
+    if base == 'id':
+        index = 0
+    else:
+        index = 1
     with open(basePath+str(base), 'r') as baseFile:
         for line in baseFile:
             lineValue = ast.literal_eval(line)[0]
             if value.lower() in lineValue.lower():
-                idList.append(ast.literal_eval(line)[1])
+                idList.append(ast.literal_eval(line)[index])
     #print (idList)
     return idList
 
