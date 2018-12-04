@@ -8,7 +8,7 @@ import Finders
 import sys
 import json
 import time
-
+import ast
 from os import system
 
 
@@ -126,15 +126,10 @@ def createAndSaveTrie(raw_path, base_path, fileName):
 
     with open(str(raw_path+fileName), 'rb') as unsorted:
         for str_line in unsorted:
-
-            lista = str_line.decode(encoding='utf-8')
-            print("%r" % lista)
-            print(json.loads(lista))
-
+            str_decoded = str_line.decode(encoding='utf8')
+            lista = ast.literal_eval(str_decoded)
             Finders.addInfoToTrie(chave=lista[0], info=lista[1], trie=trie)
-    print(trie)
     Finders.saveTrie(str(base_path+fileName), trie=trie)
-
 
 #sortFile()
 # ordena os dados de um único arquivo em data/temp utilizando

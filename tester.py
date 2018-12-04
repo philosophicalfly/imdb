@@ -21,7 +21,7 @@ def printMenu():
     print ("0 - Sair")
 
 def printFooter():
-    print ("\nDigite qualuqer coisa pra continuar.")
+    print ("\nDigite qualquer coisa pra continuar.")
     input()
 
 def getMenuOption():

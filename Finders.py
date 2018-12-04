@@ -10,8 +10,9 @@ import json
 import collections
 DEPTH = 2  #  Profundidade da arvore trie
 
-MAX_CHAR_FOR_POST = 50  # o número de chars in cada registro(linha) do POST
 SIZE_OF_EACH_RECORD = len('"tt0000000", ')
+MAX_CHAR_FOR_POST = 150  # o número de chars in cada registro(linha) do POST
+#  se mudar isto aqui, delete a trie e o arquivo Post. se não dá problema
 
 #  número de IDs salvados em cada linha do arquivo de Post
 #  hard defined:
@@ -249,7 +250,9 @@ def savePost(info, position=None, file=POST_FILE):
     new_position = position
     initial_position = position
     old_data = None
+    arq = None
     EOF = 0
+    flag_repeat_info = False
 
     log.debug('Saving %s in chain %s' % (info, position))
     try:
@@ -263,32 +266,43 @@ def savePost(info, position=None, file=POST_FILE):
         encoded_string = encodeInfo([info])
         arq.write(encoded_string)
     else:
-        # Append list with the INFO or the address and create list in the end of file
+        # Append list with the INFO OR
+        # put the address of endo of file and create an list in the end of file
         while loadLine(position, data, arq):
+            #  verify if the item is already in the Post file
+            for item in data:
+                if item == info:
+                    flag_repeat_info = True
+                    break
             position = data[-1]
             data = []
 
-        if len(data) == ID_FOR_POST:
-            new_position = arq.seek(0, 2) # jump to the end of the file
-            old_data = data
-            data = [info]
-        else:
-            arq.seek(position)
-            data.append(info)
-        
-        encoded_string = encodeInfo(data)
+        if not flag_repeat_info:
+            # verify if the line has to be extend to another line
+            if len(data) == ID_FOR_POST:
+                new_position = arq.seek(0, 2) # jump to the end of the file
+                old_data = data
+                data = [info]
+            else:
+                arq.seek(position)
+                data.append(info)
+            
+            encoded_string = encodeInfo(data)
 
-        log.debug('%r [%s]' % (encoded_string, len(encoded_string)))
-        log.debug('%r' % encoded_string)
-        arq.write( encoded_string )
-
-        if old_data is not None:
-            old_data.append( new_position )
-            arq.seek(position, 0)
-            json_string = json.dumps(old_data)
-            json_string = json_string.ljust(MAX_CHAR_FOR_POST-1) + '\n'
-            encoded_string = json_string.encode( encoding='utf-8' )
+            log.debug('%r [%s]' % (encoded_string, len(encoded_string)))
+            log.debug('%r' % encoded_string)
             arq.write( encoded_string )
+
+            if old_data is not None:
+                old_data.append( new_position )
+                arq.seek(position, 0)
+                json_string = json.dumps(old_data)
+                json_string = json_string.ljust(MAX_CHAR_FOR_POST-1) + '\n'
+                encoded_string = json_string.encode( encoding='utf-8' )
+                arq.write( encoded_string )
+    if arq is not None:
+        arq.close()
+
     return new_position
 
 
@@ -335,8 +349,7 @@ def addInfoToTrie(chave, info, trie):
     a chave é quebrada em várias chaves separadas pelos espaços.
     """
     key_list = chave.split(" ")
-    print(chave)
-    print('key list %s' % key_list)
+    log.debug("Adding %s [%s] in the trie" % (chave, info))
     for key in key_list:
         lenght = len(key)
         if lenght < 3:
@@ -436,6 +449,15 @@ def loadTrie(address):
     return trie
 
 
+def unionResults(listas):
+    lista_resumida = []
+    for lista_results in listas:
+        for result in lista_results:
+            if result not in lista_resumida:
+                lista_resumida.append(result)
+    return lista_resumida
+
+
 def test_prefix_tree():
     log.debug('LOGS /\\')
 
@@ -452,13 +474,9 @@ def test_prefix_tree():
     
     saveTrie('data/indice_pryTitle', trie)
 
-    # Testando a trie, buscando por um prefixo e usando wildcard
+
     search_results = searchInfoInTrie('race', trie)
-    lista_resumida = []
-    for lista_results in search_results:
-        for result in lista_results:
-            if result not in lista_resumida:
-                lista_resumida.append(result)
+    lista_resumida = unionResults(search_results)
 
     log.info('Resultados: (%s)' % len(lista_resumida))
     for titulo_id in raw_pryTitle:
