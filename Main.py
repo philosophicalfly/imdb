@@ -1,6 +1,7 @@
 import subprocess
 import TSV_Handler
 import Base_Handler
+import Finders
 from os import system
 from pprint import pprint
 import ast
@@ -13,11 +14,10 @@ def __init__():
 
 def printMenu():
     system("clear")
-    print ("1 - Importar nova base de dados CSV")
-    print ("2 - Ordenar database")
-    print ("3 - Selecionar")
-    print ("4 - Adicionar extensão de dados CSV")
-    print ("5 - Remover um registro")
+    print ("1 - Importar nova base de dados TSV")
+    print ("2 - Busca Simples")
+    print ("3 - Adicionar extensão de dados TSV")
+    print ("4 - Busca Ordenada Completa")
     print ("0 - Sair")
 
 def printFooter():
@@ -46,6 +46,29 @@ def show10in10(listOfIds):
         selected = Base_Handler.select(str(ids))
         print (ast.literal_eval(selected)[2])
 
+def showOrdered(listOfIds):
+    listaDeFilmes = []
+    system('clear')
+    for ids in listOfIds:
+        listaDeFilmes.append(ast.literal_eval(Base_Handler.select(str(ids))))
+    system("clear")
+    print ("1 - Ordem Normal")
+    print ("2 - Ordenar Inversa")
+    if input("Digite a ordem escolhida: ") == '1':
+        listaDeFilmes.sort(key=lambda x:x[2])
+    else:
+        listaDeFilmes.sort(key=lambda x:x[2], reverse=True)
+    for filme in listaDeFilmes:
+        system('clear')
+        print ('Resultados:\n')
+        print ("Titulo Principal: "+filme[2])
+        print ("Titulo Original:  "+filme[3])
+        print ("Tipo:             "+filme[1])
+        print ("Ano:              "+filme[5])
+        print("Pressione ENTER para continuar...")
+        if input("\nS - Sair. ") == 'S':
+            return
+        
 def get_tsv_file_choice():
     system("clear")
     print("\nLista de arquivos TSV para importação:\n")
@@ -63,7 +86,7 @@ def main():
     TSV_Handler.enforce_required_folder_structure()
     mediaList = []
     todo=-1
-    listOfFiles = ['id', 'type', 'pryTitle', 'oriTitle', 'isAdult', 'startYear', 'endYear', 'runtime', 'genres']
+    #listOfFiles = ['id', 'type', 'pryTitle', 'oriTitle', 'isAdult', 'startYear', 'endYear', 'runtime', 'genres']
     while todo != 0:
         printMenu()
         todo = getMenuOption()
@@ -73,48 +96,30 @@ def main():
                 print("\nRealizando importação... Operação pode ser demorada.")
                 TSV_Handler.importTSV(mediaList, tsv_filename)
                 print("\nImportação finalizada.")
-        elif todo == 2:
             # TODO (maybe?): ajustar ordenacao para considerar ordem numerica em vez de alfabetica quando relevante
             #               vide arquivo 'runtime', onde '45' estah vindo depois de '4' e antes de '5'
             print("\nRealizando ordenação... Operação pode ser demorada.")
             #TSV_Handler.sortDataInMemory()
             TSV_Handler.sortFiles()
             print("\nOrdenação finalizada.")
+        elif todo == 2:
+            value = input('Digite uma palavra do nome do filme: ')
+            selectedIds = Finders.getIdFromTrie(value)
+            #selectedIds = Base_Handler.getIdOf(value,base)
+            show10in10(selectedIds)
         elif todo == 3:
-            print('Bases disponíveis:')
-            for i in listOfFiles:
-                print(i)
-            base = input('\nDigite a base na qual deseja pesquisar: ')
-            if str(base) in listOfFiles:
-                value = input('Digite o Valor: ')
-                selectedIds = Base_Handler.getIdOf(value,base)
-                show10in10(selectedIds)
-            else:
-                print("Base de dados inexistente.")
-        elif todo == 4:
             tsv_filename = get_tsv_file_choice()
             if tsv_filename != None:
                 print("\nRealizando extensao dos dados com reordenacao... operacao pode ser bem demorada.")
                 TSV_Handler.extendTSV(mediaList, tsv_filename)
+                TSV_Handler.sortFiles()
                 print("\nExtensao finalizada.")
-        elif todo == 5:
-            id = input('Digite o id do registro: ')
-            # Sanitização
-            i=0
-            while i < len(id):
-                if id[i] == 't':
-                    id = id[1:]
-                    i = 0
-                elif '0' <= id[i] and id[i] <= '9':
-                    i += 1
-                else:
-                    id = input('ID não é válido. Digite um novo ID:')
-                    i = 0
+        elif todo == 4:
+            value = input('Digite uma palavra do nome do filme: ')
+            selectedIds = Finders.getIdFromTrie(value)
+            #selectedIds = Base_Handler.getIdOf(value,base)
+            showOrdered(selectedIds)
             
-            # completing the ID
-            id = 'tt' + '0' * (7 - len(id)) + id
-                        
-            print('id correto: %r' % id)
         else:
             if todo == 0:
                 system('clear')

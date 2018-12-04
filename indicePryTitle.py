@@ -202,12 +202,12 @@ def main():
 	inicio = time.time()
 	#lista = getPryTitleList('', 'pryTitle')
 	lista = []
-	with open(basePath+str('pryTitle'), 'r') as baseFile:
+	with open(basePath+str('pryTitle'), 'rb') as baseFile:
 		for line in baseFile:
 			lista.append([ast.literal_eval(line)[0].decode('utf8'), ast.literal_eval(line)[1]])
 	indice = makeIndexTitle(lista)
 
-	print lista[0]
+	print (lista[0])
 	#print(json.dumps(indice, sort_keys=True, indent=4))
 	tempo_index = time.time()
 	registro1 = searchIdFromTitle(indice, string_buscada)
@@ -241,9 +241,9 @@ def main():
 		try:
 			res = json.loads(res)
 		except Exception as e:
-			print 'error'
-			print e
-			print e.args	
+			print ('error')
+			print (e)
+			print (e.args)
 	tempo2 = time.time()
 	print('Tempo de carregar do\narquivo para a memoria: \t\t\t%f' % (tempo2 - tempo1))
 	

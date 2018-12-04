@@ -458,37 +458,14 @@ def unionResults(listas):
     return lista_resumida
 
 
-def test_prefix_tree():
-    log.debug('LOGS /\\')
-
-    # Loading raw data after the slicing by fields of the TSV files 
-    raw_pryTitle = []
-    with open('data/raw/pryTitle', 'r') as baseFile:
-        for line in baseFile:
-            raw_pryTitle.append([ast.literal_eval(line)[0], ast.literal_eval(line)[1]])
+def getIdFromTrie(procurado):
     
-    # Creating and adding data in the trie
-    trie = dict()
-    for reg in raw_pryTitle:
-        addInfoToTrie(reg[0], reg[1], trie)
+    trie = loadTrie('data/base/pryTitle')
     
-    saveTrie('data/indice_pryTitle', trie)
-
-
-    search_results = searchInfoInTrie('race', trie)
+    search_results = searchInfoInTrie(str(procurado), trie)
     lista_resumida = unionResults(search_results)
 
-    log.info('Resultados: (%s)' % len(lista_resumida))
-    for titulo_id in raw_pryTitle:
-        if titulo_id[1] in lista_resumida:
-            log.info('[%s]-> %s' % (titulo_id[1], titulo_id[0]))
-    
-
-    # testando o carregamento do disco para memória da trie
-    log.info('Loading trie')
-    loadedTrie = loadTrie('data/indice_pryTitle')
-    log.info('\n')
-
+    return lista_resumida
 
 def test_post():
     log.info('Testing inverted file (POSTING)')
