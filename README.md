@@ -3,8 +3,15 @@
 # Trabalho de Classificação e Pesquisa de Dados
 
 # RUNNING 
-* Rodar um ./cleaner.sh apos o git clone.
-* Testar com python3 tester.py
+
+Para executar o programa, o usuário deve entrar na pasta imdb e executar o script imdb.sh (se necessário, alterar as permissões da pasta inteira para permitir execução). O script chama inicialmente um cleaner, que limpa bases de dados anteriores existentes e, logo após isso, executado programa principal, em python3. (Pode ser necessária a instalação do python3 antes de executar o programa).
+Ao ser executado o programa principal, o usuário se depara com 4 opções no menu principal, e números para navegação. Na primeira execução, o usuário DEVE selecionar o número 1 e importar uma base de dados. Junto com o programa, foram fornecidas 2 bases de dados, dados.tsv, e extensao.tsv; seleciona-se então a base de dados desejada (para fins de teste, usar dados.tsv.) O processo de importação e ordenação de dados, juntamente com o de criação da árvore de prefixos inicia-se, e o usuário deve esperar até o final do processo.
+Após terminados os processos de importação, o usuário volta à tela inicial. Nesse momento, há possibilidade de importar uma extensão de dados, pesquisar rapidamente por um filme, ou pesquisar detalhadamente por um filme. 
+No caso de o usuário fazer uma pesquisa simples, deve selecionar o item 2 e, logo após isso, digitar uma palavra existente no título de seu filme. O sistema então devolve uma lista de filmes e o usuário pode apertar Enter para paginar, ou S seguido de Enter para sair da visualização e voltar ao menu principal.
+No caso de o usuário estender sua base de dados, deve selecionar o item 3, e realizar um processo semelhante ao de importação, escolhendo uma base de dados para ser adicionada ao banco de dados (para fim de testes, usar extensao.tsv).
+No caso de o usuário fazer uma pesquisa detalhada, deve selecionar o item 4 e, logo após isso, digitar uma palavra existente no título de seu filme. O sistema então devolve os formatos de ordenação possíveis para as pesquisas, que são 1: ordem alfabética normal e 2: ordem alfabética inversa. Então o usuário digita o número de seu desejo e o sistema retorna dados detalhados de cada filme na ordem que o usuário desejou. Para paginar entre os filmes o usuário deve apertar Enter, para sair e voltar ao menu principal, o usuário deve apertar S seguido de Enter.
+No caso de o usuário querer sair do sistema, deve selecionar o ítem 0.
+
 
 # DEFINIÇÃO
 
